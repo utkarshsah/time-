@@ -9,9 +9,13 @@ import warnings
 warnings.filterwarnings('ignore')
 import pandas as pd
 import itertools
+import os
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-from fbprophet import Prophet
+from prophet import Prophet
 from sklearn.metrics import mean_squared_error
 import warnings
 warnings.filterwarnings('ignore')
@@ -19,8 +23,9 @@ from random import randint
 import plotly.graph_objs as go
 import plotly.offline as py
 
-import os
-app = Flask("__name__")
+import base64
+from io import BytesIO
+app = Flask(__name__)
 app.config["IMAGE_UPLOADS"] = "static/img/"
 @app.route('/')
 def hello():
@@ -39,13 +44,16 @@ def submit_data():
     
         
     f=request.files['userfile']
-    f.save(f.filename)    
     s1=request.form['query1']
     s2=request.form['query2']  
     t=int(request.form['query3'])
     s4=request.form['query4']
-    d1=f.filename
-    df=pd.read_csv(d1)
+    freq_aliases = {
+        'M': 'ME',
+        'Y': 'YE',
+    }
+    s4 = freq_aliases.get(s4, s4)
+    df=pd.read_csv(f)
     
     
     #Prophet
@@ -104,10 +112,12 @@ def submit_data():
 
     #plt.xticks(rotation=90)
     #plt.show()
-    n=randint(0,1000000000000)
-    n=str(n)
-    fig.savefig(os.path.join(app.config["IMAGE_UPLOADS"],n+'time_series.png'))  
-    full_filename= os.path.join(app.config["IMAGE_UPLOADS"],n+'time_series.png')
+    image_buffer = BytesIO()
+    fig.savefig(image_buffer, format='png', bbox_inches='tight')
+    plt.close(fig)
+    image_buffer.seek(0)
+    image_base64 = base64.b64encode(image_buffer.getvalue()).decode('utf-8')
+    full_filename = f"data:image/png;base64,{image_base64}"
     
     
     return render_template('step1.html',user_image = full_filename,tables=[final_df_1.to_html(classes='forecast')],titles=['na','forecast'],query1 = request.form['query1'],query2 = request.form['query2'],query3 = request.form['query3'], query4 = request.form['query4'])
@@ -128,5 +138,6 @@ def submit_data():
     
    
 if __name__ =="__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
     

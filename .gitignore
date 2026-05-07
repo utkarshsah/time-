@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+
+FlaskApi/.venv/
+FlaskApi/*.csv
+FlaskApi/static/img/*time_series.png
+
+.env
+.env.*
+.vercel/
