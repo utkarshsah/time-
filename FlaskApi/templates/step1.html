@@ -619,8 +619,19 @@
       }
     }
   </script>
+  {% if has_results %}
+  <script>
+    window.addEventListener('load', function () {
+      var results = document.getElementById('results');
+      if (results) {
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  </script>
+  {% endif %}
 </head>
 <body>
+  {% set has_results = tables is defined and tables %}
   {% set selected_freq = query4|default('M') %}
   <div class="app-shell">
     <section class="hero">
@@ -713,11 +724,16 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="results">
         <div class="panel-head">
           <p class="eyebrow">Output deck</p>
           <h2>Forecast results</h2>
           <p class="panel-copy">The prediction table and chart appear here after you submit the form.</p>
+          {% if has_results %}
+            <div class="submit-row" style="margin-top: 14px;">
+              <span class="status-pill" style="border-color: rgba(140, 247, 186, 0.30); color: #dfffee;">Forecast ready</span>
+            </div>
+          {% endif %}
         </div>
 
         <div class="panel-body">
