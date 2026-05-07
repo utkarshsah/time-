@@ -1,127 +1,750 @@
-<html>
+<html lang="en">
 <head>
-	<title>Time Series Forecasting</title>
-   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    <script type="text/javascript" >// <![CDATA[ 
-        function loading(){
-            $("#loading").show();
-            $("#content").hide();       
-        }
-// ]]></script>
-<meta charset="utf-8" />
-<style>
-table.dataframe, .dataframe th, .dataframe td {
-  border: none;
-  border-bottom: 1px solid #C8C8C8;
-  border-collapse: collapse;
-  text-align:left;
-  padding: 10px;
-  margin-bottom: 40px;
-  font-size: 0.9em;
-  color: #FFFFFF;
-}
-	.heading { color: #FFFFFF;}  
-body {
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forecast Forge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-0: #050816;
+      --bg-1: #0a1220;
+      --bg-2: #111b2e;
+      --panel: rgba(9, 14, 26, 0.82);
+      --panel-strong: rgba(12, 19, 35, 0.94);
+      --border: rgba(166, 195, 255, 0.16);
+      --text: #eff4ff;
+      --muted: #a8b6d4;
+      --accent: #67e8f9;
+      --accent-2: #8cf7ba;
+      --accent-3: #f4c96d;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+    }
 
-    padding:0px;
-    margin:20px;
-    background:url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/499416/demo-bg.jpg") ;
-    background-size:auto;
-    width:100vw;
-    height:100vh;
-    
-   
-}
-div#loading {
- 
-    width: 1700px;
-    height: 35px;
-    display: none;
-    background: url('{{ url_for('static', filename='loading_bar.gif' ) }}') no-repeat;
-    cursor: wait;
-    
-  }
+    * {
+      box-sizing: border-box;
+    }
 
+    html {
+      scroll-behavior: smooth;
+    }
 
-</style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: 'Manrope', sans-serif;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(103, 232, 249, 0.20), transparent 22%),
+        radial-gradient(circle at 82% 14%, rgba(140, 247, 186, 0.15), transparent 20%),
+        radial-gradient(circle at 15% 82%, rgba(244, 201, 109, 0.12), transparent 18%),
+        linear-gradient(145deg, var(--bg-0) 0%, var(--bg-1) 46%, #060a14 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
 
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 80%);
+      opacity: 0.35;
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      width: min(1260px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.5fr 0.9fr;
+      gap: 20px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: linear-gradient(180deg, rgba(13, 19, 34, 0.92), rgba(7, 11, 20, 0.84));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(18px);
+      pointer-events: none;
+    }
+
+    .hero::before {
+      width: 260px;
+      height: 260px;
+      top: -140px;
+      right: -90px;
+      background: rgba(103, 232, 249, 0.20);
+    }
+
+    .hero::after {
+      width: 180px;
+      height: 180px;
+      left: -70px;
+      bottom: -80px;
+      background: rgba(140, 247, 186, 0.16);
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent-3);
+    }
+
+    h1,
+    h2,
+    h3,
+    .number,
+    .step-badge {
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.6rem, 7vw, 5rem);
+      line-height: 0.92;
+      letter-spacing: -0.04em;
+    }
+
+    .lede {
+      max-width: 62ch;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 1.03rem;
+      line-height: 1.7;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .badge-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      color: #dbe8ff;
+      font-size: 0.92rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .hero-panel {
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+      border-radius: 24px;
+      border: 1px solid rgba(140, 247, 186, 0.14);
+      background: linear-gradient(180deg, rgba(7, 13, 24, 0.92), rgba(12, 18, 33, 0.86));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .hero-panel-title {
+      margin: 0;
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .hero-panel-subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .steps {
+      list-style: none;
+      padding: 0;
+      margin: 18px 0 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .steps li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 14px 14px 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: #dce7ff;
+      line-height: 1.55;
+    }
+
+    .step-badge {
+      flex: 0 0 auto;
+      min-width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(103, 232, 249, 0.22), rgba(140, 247, 186, 0.18));
+      color: #eff8ff;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .sample-card {
+      margin-top: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(103, 232, 249, 0.08), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(103, 232, 249, 0.12);
+    }
+
+    .sample-label {
+      margin: 0 0 6px;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .sample-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+      gap: 22px;
+      margin-top: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(103, 232, 249, 0.06), transparent 36%, rgba(140, 247, 186, 0.04));
+      pointer-events: none;
+    }
+
+    .panel-head {
+      position: relative;
+      z-index: 1;
+      padding: 24px 24px 0;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .panel-copy {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .panel-body {
+      position: relative;
+      z-index: 1;
+      padding: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.wide {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #eef4ff;
+      letter-spacing: 0.03em;
+    }
+
+    .helper {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+
+    .form-control {
+      width: 100%;
+      min-height: 52px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(164, 189, 255, 0.18);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    .form-control::placeholder {
+      color: rgba(233, 240, 255, 0.38);
+    }
+
+    .form-control:focus {
+      border-color: rgba(103, 232, 249, 0.65);
+      box-shadow: 0 0 0 4px rgba(103, 232, 249, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    input[type="file"].form-control {
+      padding: 11px 12px;
+    }
+
+    input[type="file"]::file-selector-button {
+      margin-right: 14px;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #05111a;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+      filter: brightness(1.03);
+    }
+
+    select.form-control {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.7) 50%), linear-gradient(135deg, rgba(255, 255, 255, 0.7) 50%, transparent 50%);
+      background-position: calc(100% - 22px) calc(50% - 3px), calc(100% - 16px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 42px;
+    }
+
+    .submit-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .submit-btn {
+      appearance: none;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 22px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #04111a;
+      font-size: 0.98rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: 0 18px 36px rgba(103, 232, 249, 0.20);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 22px 42px rgba(103, 232, 249, 0.26);
+      filter: brightness(1.04);
+    }
+
+    .submit-btn:disabled {
+      cursor: progress;
+      opacity: 0.85;
+    }
+
+    .status-pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .loading-shell {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(103, 232, 249, 0.16);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 3px solid rgba(103, 232, 249, 0.22);
+      border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite;
+      flex: 0 0 auto;
+    }
+
+    .loading-copy strong {
+      display: block;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+
+    .loading-copy p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .output-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .empty-state {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      padding: 26px;
+      text-align: center;
+      border-radius: 22px;
+      border: 1px dashed rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+    }
+
+    .empty-state::before {
+      content: "";
+      position: absolute;
+      inset: auto auto -90px -90px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: rgba(103, 232, 249, 0.10);
+      filter: blur(12px);
+    }
+
+    .empty-orb {
+      width: 84px;
+      height: 84px;
+      border-radius: 26px;
+      border: 1px solid rgba(103, 232, 249, 0.22);
+      background: linear-gradient(135deg, rgba(103, 232, 249, 0.18), rgba(140, 247, 186, 0.08));
+      box-shadow: 0 0 0 10px rgba(103, 232, 249, 0.04);
+      margin-bottom: 18px;
+    }
+
+    .empty-state h3 {
+      position: relative;
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+    }
+
+    .empty-state p {
+      position: relative;
+      max-width: 34ch;
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .table-shell {
+      overflow-x: auto;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--panel-strong);
+    }
+
+    .table-shell table,
+    table.forecast {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+    }
+
+    .table-shell thead th,
+    table.forecast thead th {
+      padding: 14px 16px;
+      background: rgba(103, 232, 249, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: #ddfbff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      white-space: nowrap;
+    }
+
+    .table-shell tbody td,
+    table.forecast tbody td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: #edf3ff;
+      font-size: 0.95rem;
+    }
+
+    .table-shell tbody tr:hover,
+    table.forecast tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .chart-shell {
+      padding: 14px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+    }
+
+    .chart-shell img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .file-note {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell {
+        width: min(100%, calc(100% - 20px));
+        padding-top: 16px;
+      }
+
+      .hero,
+      .panel-body,
+      .panel-head {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .hero {
+        padding-top: 22px;
+        padding-bottom: 22px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <script>
+    function loading() {
+      var loadingShell = document.getElementById('loading');
+      var content = document.getElementById('content');
+      var button = document.getElementById('submit-btn');
+
+      if (loadingShell) {
+        loadingShell.style.display = 'flex';
+      }
+
+      if (content) {
+        content.style.opacity = '0.45';
+        content.style.pointerEvents = 'none';
+      }
+
+      if (button) {
+        button.disabled = true;
+      }
+    }
+  </script>
 </head>
-   <body>
-      
-	  <div class="container" >
-		<!--
-		<div class="row">
-        -->
-		  <form action="{{ url_for('submit_data') }}" method="POST" enctype="multipart/form-data">
-		  	<div class="col-sm-9">
-	<h4  class="heading">UPLOAD YOUR FILE</h4>
-	<h4  class="heading">Format should be csv or excel</h4>
-				<input type="file" name="userfile" class="btn btn-primary" >
+<body>
+  {% set selected_freq = query4|default('M') %}
+  <div class="app-shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Forecast Forge</p>
+        <h1>Upload data. Tune the horizon. Read the next move.</h1>
+        <p class="lede">
+          A cleaner time-series control room for Prophet forecasting. Drop in a CSV, map the date and target columns,
+          pick a forecast window, and the app returns a chart plus a forecast table.
+        </p>
+        <div class="hero-badges">
+          <span class="badge-chip">CSV upload</span>
+          <span class="badge-chip">Prophet model</span>
+          <span class="badge-chip">Render deployment</span>
+          <span class="badge-chip">Mobile friendly</span>
+        </div>
+      </div>
 
+      <aside class="hero-panel">
+        <p class="hero-panel-title">Quick path</p>
+        <p class="hero-panel-subtitle">Use the exact column names from your dataset. For the included sample, that means <strong>Month</strong> and <strong>#Passengers</strong>.</p>
+        <ol class="steps">
+          <li><span class="step-badge">01</span><span>Upload a CSV file with a date column and a numeric target column.</span></li>
+          <li><span class="step-badge">02</span><span>Choose how many intervals to predict and how they should be spaced.</span></li>
+          <li><span class="step-badge">03</span><span>Review the forecast table and the plotted trend below.</span></li>
+        </ol>
+        <div class="sample-card">
+          <p class="sample-label">Sample file</p>
+          <p class="sample-text">AirPassengers.csv already works with <strong>Month</strong> as the date column and <strong>#Passengers</strong> as the target.</p>
+        </div>
+      </aside>
+    </section>
 
+    <div class="section-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <p class="eyebrow">Input deck</p>
+          <h2>Build a forecast</h2>
+          <p class="panel-copy">Keep the column names exact. The page will rerun the model when you submit the form.</p>
+        </div>
 
-			 <div class="form-group  purple-border">
-				  <label for="comment"  class="heading">Date Column Name</label>
-				  <textarea class="form-control" rows="2" id="query1" name="query1" rows="2" cols="5" autofocus>{{query1}}</textarea>
-			</div>
-			
-			<div class="form-group  purple-border">
-				  <label for="comment"  class="heading">Feature/Variable to Forecast</label>
-				  <textarea class="form-control" rows="2" id="query2" name="query2" rows="2" cols="5" autofocus>{{query2}}</textarea>
-			</div>
-			<!--
-			<div class="form-group  purple-border">
-				  <label for="comment" class="heading">Enter the Timeframe: M/D/Y/W</label>
-				  <textarea class="form-control" rows="2" id="query4" name="query4" rows="2" cols="5" autofocus>{{query4}}</textarea>
-			</div>
-			-->
-			<div>
-			<label for="comment" class="heading">Forecasting</label>
-			<select class="form-control" id="query4" name="query4">
-                <option value="M" selected>Monthly</option>
-                <option value="D">Day</option>
-                <option value="Y">Yearly</option>
-                <option value="W">Weekly</option>
-            </select>
+        <div class="panel-body" id="content">
+          <form action="{{ url_for('submit_data') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+              <div class="field wide">
+                <label for="userfile">Upload CSV file</label>
+                <input type="file" id="userfile" name="userfile" class="form-control" accept=".csv">
+                <p class="file-note">Use the sample dataset in this repo or your own CSV with a date column and target column.</p>
+              </div>
+
+              <div class="field">
+                <label for="query1">Date column name</label>
+                <input type="text" class="form-control" id="query1" name="query1" placeholder="Month" value="{{ query1|default('') }}">
+              </div>
+
+              <div class="field">
+                <label for="query2">Target column name</label>
+                <input type="text" class="form-control" id="query2" name="query2" placeholder="#Passengers" value="{{ query2|default('') }}">
+              </div>
+
+              <div class="field">
+                <label for="query4">Forecast frequency</label>
+                <select class="form-control" id="query4" name="query4">
+                  <option value="M" {% if selected_freq == 'M' %}selected{% endif %}>Monthly</option>
+                  <option value="D" {% if selected_freq == 'D' %}selected{% endif %}>Daily</option>
+                  <option value="Y" {% if selected_freq == 'Y' %}selected{% endif %}>Yearly</option>
+                  <option value="W" {% if selected_freq == 'W' %}selected{% endif %}>Weekly</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="query3">Forecast horizon</label>
+                <input type="number" class="form-control" id="query3" name="query3" min="1" step="1" placeholder="12" value="{{ query3|default('') }}">
+              </div>
             </div>
-            
-		
-		
-			<div class="form-group  purple-border">
-				  <label for="comment" class="heading">How many intervals do you want to forecast?</label>
-				  <textarea class="form-control" rows="2" id="query3" name="query3" rows="2" cols="5" autofocus>{{query3}}</textarea>
-			</div>
-			
-	
-			
 
-			</div>
-			<div class="col-sm-3">
-			<button type="submit" class="btn btn-primary" name="submit"onclick="loading();">SUBMIT</button>
-			</div>
-		  </form><br>
-		  <div id="loading" >
-		  	<br>
-  <p class="heading"> Please wait</p>
-		  </div>
-		  </div>
-		<br>  
-		<div class=page>
- 		<h1  class="heading">Forecasted Data</h1>
- 		<table>
-  		{% for table in tables %}
-    	
-    	{{ table|safe }}
-  		{% endfor %}
-  	</table>
+            <div class="submit-row">
+              <button type="submit" id="submit-btn" class="submit-btn" name="submit" onclick="loading();">Run forecast</button>
+              <span class="status-pill">Prophet + Render</span>
+            </div>
 
-  	<br>
-  	<img src="{{ user_image }}" alt="User Image"/>
-	<!--
-	</div>-->
-	</div>		
-   </body>
+            <div id="loading" class="loading-shell">
+              <div class="spinner"></div>
+              <div class="loading-copy">
+                <strong>Running forecast</strong>
+                <p>Training the model and drawing the chart. This can take a few seconds.</p>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <p class="eyebrow">Output deck</p>
+          <h2>Forecast results</h2>
+          <p class="panel-copy">The prediction table and chart appear here after you submit the form.</p>
+        </div>
+
+        <div class="panel-body">
+          {% if tables is defined or user_image is defined %}
+            <div class="output-stack">
+              {% for table in tables %}
+                <div class="table-shell">
+                  {{ table|safe }}
+                </div>
+              {% endfor %}
+
+              {% if user_image is defined %}
+                <div class="chart-shell">
+                  <img src="{{ user_image }}" alt="Forecast chart">
+                </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <div class="empty-orb"></div>
+              <h3>No forecast yet</h3>
+              <p>Fill the form on the left, then submit to generate the prediction table and line chart.</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
 </html>
