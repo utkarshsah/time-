@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: time-series-analysis
+    runtime: python
+    rootDir: FlaskApi
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn time_series_forecasting_using_fbprophet:app
+    autoDeployTrigger: commit
