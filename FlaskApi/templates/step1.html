@@ -616,7 +616,9 @@
       }
 
       if (button) {
-        button.disabled = true;
+        setTimeout(function() {
+          button.disabled = true;
+        }, 50);
       }
     }
   </script>

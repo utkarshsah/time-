@@ -41,8 +41,8 @@ def home():
 
 @app.route('/',methods=['POST'])
 def submit_data():
-    
-        
+  try:
+    print("\n>>> Form submitted, starting forecast...")
     f=request.files['userfile']
     s1=request.form['query1']
     s2=request.form['query2']  
@@ -54,14 +54,16 @@ def submit_data():
     }
     s4 = freq_aliases.get(s4, s4)
     df=pd.read_csv(f)
-    
+    print(f">>> CSV loaded: {df.shape[0]} rows, columns: {list(df.columns)}")
     
     #Prophet
     df = df.rename(columns={s2: 'y', s1:'ds'})
     df['y_orig'] = df['y'] # to save a copy of the original data..you'll see why shortly. 
     df['y'] = np.log(df['y'])
+    print(">>> Fitting Prophet model (this may take a minute on first run)...")
     model = Prophet() #instantiate Prophet
     model.fit(df)
+    print(">>> Model fitted successfully!")
 
     
     
@@ -79,9 +81,9 @@ def submit_data():
         
         
     future_data = model.make_future_dataframe(periods=t, freq = s4)
-
-    future_data
+    print(f">>> Future dataframe created: {len(future_data)} rows, freq={s4}")
     forecast_data = model.predict(future_data)
+    print(">>> Prediction complete!")
 
     
     forecast_data[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(10)
@@ -119,8 +121,12 @@ def submit_data():
     image_base64 = base64.b64encode(image_buffer.getvalue()).decode('utf-8')
     full_filename = f"data:image/png;base64,{image_base64}"
     
-    
+    print(">>> Chart generated, sending response!\n")
     return render_template('step1.html',user_image = full_filename,tables=[final_df_1.to_html(classes='forecast')],titles=['na','forecast'],query1 = request.form['query1'],query2 = request.form['query2'],query3 = request.form['query3'], query4 = request.form['query4'])
+  except Exception as e:
+    import traceback
+    traceback.print_exc()
+    return f"<h2>Error</h2><pre>{traceback.format_exc()}</pre>", 500
      
 '''
     import plotly.graph_objs as go
@@ -139,5 +145,6 @@ def submit_data():
    
 if __name__ =="__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    print(f"Starting Flask on port {port} with debug=True")
+    app.run(host="0.0.0.0", port=port, debug=True)
     
