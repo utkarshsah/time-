@@ -1,3 +1,4 @@
+{% set has_results = tables is defined and tables %}
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -619,19 +620,16 @@
       }
     }
   </script>
-  {% if has_results %}
   <script>
     window.addEventListener('load', function () {
       var results = document.getElementById('results');
-      if (results) {
+      if (results && results.querySelector('.table-shell, .chart-shell')) {
         results.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     });
   </script>
-  {% endif %}
 </head>
 <body>
-  {% set has_results = tables is defined and tables %}
   {% set selected_freq = query4|default('M') %}
   <div class="app-shell">
     <section class="hero">
